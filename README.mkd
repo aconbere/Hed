@@ -1,0 +1,18 @@
+# Hed #
+
+## Intro ##
+
+Hed is really a toy to let me play with how one might go about writing a text editor, exploring the use of data structures and programable interfaces. I had been working on most of this while learning about finger trees and trying to do both a ropes module and the text editor at the same time. That was a disaster. So when Vih came out I thought about it, and decided to focus on the UI portion and use the EditBuffer from that to abstract that work.
+
+## Making Hed ##
+
+    $> cd hed
+    $> ghc --make hed
+
+## Running Hed ##
+
+    $> cd hed
+    $> ./hed -i /path/to/file
+
+Hit Esc to exit
+
