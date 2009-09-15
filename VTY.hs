@@ -25,6 +25,8 @@ play vt w h buf = do
         EvKey KUp    []               -> play vt w h (moveUp buf)
         EvKey KDown  []               -> play vt w h (moveDown buf)
         EvKey KEsc   []               -> shutdown vt >> return ()
+        EvKey KDel   []               -> play vt w h (deleteChar buf)
+        EvKey (KASCII 'h') [MCtrl]    -> play vt w h (deleteChar buf)
         EvKey (KASCII '\t') []        -> play vt w h (insertString "    " buf)
         EvKey (KASCII ch) []          -> play vt w h (insertChar ch buf)
         EvKey KEnter []               -> play vt w h (insertChar '\n' buf)
