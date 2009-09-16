@@ -28,7 +28,7 @@ module EditBuffer
      , enterCommandMode
      , getBufferContents
      , lineCount
-     , insertChar, deleteChar, replaceChar, insertString
+     , insertChar, deleteCharForward, deleteCharBackward, replaceChar, insertString
      , insertLineAfter
      , deleteLine
      , moveLeft, moveRight, moveUp, moveDown
@@ -53,7 +53,7 @@ initialBuffer s = EditBuffer 0 (0,0) s
 emptyBuffer = initialBuffer ""
 
 enterCommandMode :: EditBuffer -> EditBuffer
-enterCommandMode = forceLocation 
+enterCommandMode = resetCursor
 
 getBufferContents:: EditBuffer -> String
 getBufferContents (EditBuffer _ _ contents) = contents
@@ -72,12 +72,21 @@ insertString :: String -> EditBuffer -> EditBuffer
 insertString str buffer =
     foldl (\b ch -> insertChar ch b) buffer str
 
-deleteChar :: EditBuffer -> EditBuffer
-deleteChar buffer@(EditBuffer topLine location@(x,y) contents) 
+deleteCharForward :: EditBuffer -> EditBuffer
+deleteCharForward buffer@(EditBuffer topLine location@(x,y) contents) 
     | (currentLineLength buffer == 0) = buffer
-    | otherwise                       = satX 0 (EditBuffer topLine location newContents)
+    | otherwise                       = resetCursor (EditBuffer topLine location newContents)
   where newContents     = before ++ (tail after)
         (before, after) = split buffer
+
+deleteCharBackward :: EditBuffer -> EditBuffer
+deleteCharBackward buffer@(EditBuffer topLine location@(x,y) contents) 
+    | (currentLineLength buffer == 0) = buffer
+    | otherwise                = 
+        case before of
+            [] -> buffer
+            _  -> resetCursor (EditBuffer topLine location (init before ++ after))
+    where (before, after) = split buffer
 
 init' [] = []
 init' ls = init ls
@@ -95,32 +104,55 @@ insertLineAfter (EditBuffer topLine (_,y) contents) = EditBuffer topLine (0,y+1)
         f (line, pos) = if pos == y then line ++ "\n" else line  
 
 deleteLine :: EditBuffer ->EditBuffer
-deleteLine (EditBuffer topLine location@(_,y) contents) = forceLocation (EditBuffer topLine location newContents)
+deleteLine (EditBuffer topLine location@(_,y) contents) = resetCursor (EditBuffer topLine location newContents)
   where newContents = unlines [ line | (line, pos) <- numberedLines contents, pos /= y] 
 
+-- sets the cursor at a specific location, bounded by buffer constraints
+setCursor nx ny buf@(EditBuffer topLine (x,y) contents) =
+    EditBuffer topLine (boundedValue xBound nx, boundedValue yBound ny) contents
+    where xBound = currentLineLength buf
+          yBound = lineCount buf
+
+-- if the bounds have changed (say a line or char was deleted) then
+-- one should reset the cursor to adjust for edge conditions
+resetCursor buf@(EditBuffer topLine (x,y) contents) = setCursor x y buf
+
+-- updates the cursor by a particular offset given by (ax, ay)
+-- example if the cursor were (0,0)
+-- moveCursor 1 2 buf
+-- would return a cursor at (1,2)
+moveCursor ax ay buf@(EditBuffer topLine (x,y) contents) = setCursor (x + ax) (y + ay) buf
+
+-- bounds a value between 0 and (bound - 1)
+boundedValue :: Int -> Int -> Int
+boundedValue bound value
+  | bound <= 1      = 0
+  | value <= 0      = 0
+  | value >= bound  = bound - 1 
+  | otherwise       = value
+
 moveLeft, moveRight, moveUp, moveDown :: EditBuffer -> EditBuffer
-moveLeft  = saturate (-1, 0)  
-moveRight = saturate ( 1, 0)
-moveUp    = saturate ( 0,-1)
-moveDown  = saturate ( 0, 1)
+moveLeft  = moveCursor (-1) 0  
+moveRight = moveCursor 1 0
+moveUp    = moveCursor 0 (-1)
+moveDown  = moveCursor 0 1
 
 moveToHome :: EditBuffer -> EditBuffer
-moveToHome (EditBuffer topLine _ contents) = EditBuffer topLine (0,0) contents
+moveToHome = setCursor 0 0
 
 moveToEnd :: EditBuffer -> EditBuffer
-moveToEnd = saturate (lastPos, lastPos)
+moveToEnd = setCursor lastPos lastPos
   where lastPos = (maxBound :: Int) - 1
 
 moveToLine :: Int -> EditBuffer -> EditBuffer
-moveToLine lineNumber (EditBuffer topLine (x,y) contents) =
-  forceLocation (EditBuffer topLine (x, lineNumber) contents)
+moveToLine lineNumber = setCursor 0 lineNumber
 
 moveToLineStart :: EditBuffer -> EditBuffer
-moveToLineStart (EditBuffer topLine (_,y) contents) = EditBuffer topLine (0,y) contents
+moveToLineStart buf@(EditBuffer _ (_,y) _) = setCursor 0 y buf
 
 moveToLineEnd :: EditBuffer -> EditBuffer
-moveToLineEnd buffer@(EditBuffer topLine (_,y) contents) = 
-  satX 0 $ (EditBuffer topLine ((currentLineLength buffer), y) contents) 
+moveToLineEnd buf@(EditBuffer _ (_,y) _) = 
+    setCursor (currentLineLength buf) y buf
 
 wordForward :: EditBuffer -> EditBuffer
 wordForward buffer@(EditBuffer topLine _ contents) = 
@@ -144,15 +176,14 @@ showRepresentation :: EditBuffer -> String
 showRepresentation (EditBuffer topLine location contents) =
   show topLine ++ " " ++ show location ++ " " ++ show contents
 
-
-forceLocation = saturate (0,0)
-
+-- returns the line at the cursor
 currentLine :: EditBuffer -> String
 currentLine (EditBuffer _ _ "") = ""
 currentLine buffer@(EditBuffer _ (_, y) contents) 
   | (y < 0) || (y >= (lineCount buffer))  = ""
   | otherwise                             = (lines contents) !! y
 
+-- returns the horizontal line length at the cursor
 currentLineLength :: EditBuffer -> Int
 currentLineLength = length . currentLine
 
@@ -199,27 +230,8 @@ dropAlphaNums = dropInNumbered isAlphaNum
 dropInNumbered :: (Char -> Bool) -> [(Char,a)] -> [(Char,a)]
 dropInNumbered f = dropWhile (\(ch,_) -> f ch)
 
-saturate :: (Int,Int) -> EditBuffer -> EditBuffer
-saturate (adjX,adjY)  = satX adjX . satY adjY
-
-satX :: Int -> EditBuffer -> EditBuffer
-satX adjX buffer@(EditBuffer topLine (x,y) contents) =
-  EditBuffer topLine (saturateValue (currentLineLength buffer) (x + adjX), y) contents
-
-satY :: Int -> EditBuffer -> EditBuffer
-satY adjY buffer@(EditBuffer topLine (x,y) contents) = 
-  EditBuffer topLine (x, saturateValue (lineCount buffer) (y + adjY)) contents
-
-saturateValue :: Int -> Int -> Int
-saturateValue bound value
-  | bound <= 1      = 0
-  | value <= 0      = 0
-  | value >= bound  = bound - 1 
-  | otherwise       = value
-
 numberedElements :: [a] -> [(a,Int)]
 numberedElements = (flip zip) [0..]
 
 numberedLines :: String -> [(String,Int)]
 numberedLines = numberedElements . lines
-

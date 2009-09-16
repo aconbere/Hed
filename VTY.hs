@@ -16,7 +16,7 @@ statusA = def_attr `with_back_color` green
 
 play :: Vty -> Word -> Word -> EditBuffer -> IO () 
 play vt w h buf = do
-     update vt (render buf (fromEnum w) (fromEnum h))
+     update vt $ render buf (fromEnum w) (fromEnum h)
      k <- next_event vt
      case k of 
         EvKey (KASCII 'r') [MCtrl]    -> refresh vt >> play vt w h buf
@@ -25,8 +25,8 @@ play vt w h buf = do
         EvKey KUp    []               -> play vt w h (moveUp buf)
         EvKey KDown  []               -> play vt w h (moveDown buf)
         EvKey KEsc   []               -> shutdown vt >> return ()
-        EvKey KDel   []               -> play vt w h (deleteChar buf)
-        EvKey (KASCII 'h') [MCtrl]    -> play vt w h (deleteChar buf)
+        EvKey KDel   []               -> play vt w h (deleteCharForward buf)
+        EvKey (KASCII 'h') [MCtrl]    -> play vt w h (deleteCharBackward buf)
         EvKey (KASCII '\t') []        -> play vt w h (insertString "    " buf)
         EvKey (KASCII ch) []          -> play vt w h (insertChar ch buf)
         EvKey KEnter []               -> play vt w h (insertChar '\n' buf)
@@ -47,5 +47,5 @@ renderBuffer buf@(EditBuffer topLine (x,y) contents) w h =
     vert_cat (map (\l -> renderLine l w dumpA) $ take h (lines (contents ++ repeat '\n')))
 
 render :: EditBuffer -> Int -> Int -> Picture
-render buf@(EditBuffer _ (x,y) contents) w h = pic_for_image i
+render buf@(EditBuffer _ (x,y) contents) w h = (pic_for_image i) {pic_cursor = Cursor (toEnum x) (toEnum y)}
     where i =  renderBuffer buf w (h - 1) <-> renderStatus buf w h 
