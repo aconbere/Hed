@@ -1,17 +1,11 @@
-module Main where
-import Opts
-import System.Environment
-import System.Console.GetOpt
-import VTY
+module Hed (
+    module Hed.VTY,
+    module Hed.EditBuffer,
+    module Hed.Main
+    ) where
 
-main = do
-    args <- getArgs
-    let (actions, nonOptions, errors) = getOpt RequireOrder options args
-    opts <- foldl (>>=) (return startOptions) actions
-    let Options { optFile = Nothing } = opts
+import Hed.VTY
+import Hed.EditBuffer
+import Hed.Opts
+import Hed.Main
 
-    case optFile opts of
-        Nothing -> window "This helps me know how things are initialized \n\n help"
-        Just f -> do
-            f_contents <- readFile f
-            window f_contents

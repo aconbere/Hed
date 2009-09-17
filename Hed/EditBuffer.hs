@@ -21,7 +21,7 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
    OTHER DEALINGS IN THE SOFTWARE. -}
 
-module EditBuffer
+module Hed.EditBuffer
      ( EditBuffer(..)
      , Location
      , emptyBuffer
@@ -40,8 +40,7 @@ module EditBuffer
      , initialBuffer
      , splitBuffer
      , getCursor
-     ) 
-where
+     ) where
 
 import Char
 
@@ -85,7 +84,7 @@ deleteCharBackward buffer@(EditBuffer topLine location@(x,y) contents)
     | otherwise                = 
         case before of
             [] -> buffer
-            _  -> resetCursor (EditBuffer topLine location (init before ++ after))
+            _  -> moveLeft (EditBuffer topLine location (init before ++ after))
     where (before, after) = split buffer
 
 init' [] = []
@@ -107,21 +106,33 @@ deleteLine :: EditBuffer ->EditBuffer
 deleteLine (EditBuffer topLine location@(_,y) contents) = resetCursor (EditBuffer topLine location newContents)
   where newContents = unlines [ line | (line, pos) <- numberedLines contents, pos /= y] 
 
+setCursorX :: Int -> EditBuffer -> EditBuffer
+setCursorX nx buf@(EditBuffer topLine (x,y) contents) =
+    EditBuffer topLine (boundedValue bound nx, y) contents
+    where bound = currentLineLength buf
+
+setCursorY :: Int -> EditBuffer -> EditBuffer
+setCursorY ny buf@(EditBuffer topLine (x,y) contents) =
+    EditBuffer topLine (x, boundedValue bound ny) contents
+    where bound = lineCount buf
+
 -- sets the cursor at a specific location, bounded by buffer constraints
-setCursor nx ny buf@(EditBuffer topLine (x,y) contents) =
-    EditBuffer topLine (boundedValue xBound nx, boundedValue yBound ny) contents
-    where xBound = currentLineLength buf
-          yBound = lineCount buf
+setCursor :: Int -> Int -> EditBuffer -> EditBuffer
+setCursor nx ny = setCursorX nx . setCursorY ny
 
 -- if the bounds have changed (say a line or char was deleted) then
 -- one should reset the cursor to adjust for edge conditions
-resetCursor buf@(EditBuffer topLine (x,y) contents) = setCursor x y buf
+resetCursor :: EditBuffer -> EditBuffer
+resetCursor buf@(EditBuffer _ (x,y) _) =
+    setCursor x y buf
 
 -- updates the cursor by a particular offset given by (ax, ay)
 -- example if the cursor were (0,0)
 -- moveCursor 1 2 buf
 -- would return a cursor at (1,2)
-moveCursor ax ay buf@(EditBuffer topLine (x,y) contents) = setCursor (x + ax) (y + ay) buf
+moveCursor :: Int -> Int -> EditBuffer -> EditBuffer
+moveCursor ax ay buf@(EditBuffer _ (x,y) _) =
+    setCursor (x + ax) (y + ay) buf
 
 -- bounds a value between 0 and (bound - 1)
 boundedValue :: Int -> Int -> Int

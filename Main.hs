@@ -1,9 +1,11 @@
-module Opts where
+module Main (main) where
 
 import System.Console.GetOpt
 import Data.Maybe (fromMaybe)
 import IO
 import System
+
+import Hed
 
 version = "0.01"
 
@@ -32,3 +34,15 @@ options =
                 exitWith ExitSuccess))
         "Show help"
     ]
+
+main = do
+    args <- getArgs
+    let (actions, nonOptions, errors) = getOpt RequireOrder options args
+    opts <- foldl (>>=) (return startOptions) actions
+    let Options { optFile = Nothing } = opts
+
+    case optFile opts of
+        Nothing -> hed "This helps me know how things are initialized \n\n help"
+        Just f -> do
+            f_contents <- readFile f
+            hed f_contents

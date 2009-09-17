@@ -1,9 +1,11 @@
-module VTY where
+module Hed.VTY where
+
 import Graphics.Vty
 import System.IO
 import qualified Data.ByteString.Char8 as B
-import EditBuffer
 import Data.Word
+
+import Hed.EditBuffer
 
 window s = do
     vt <- mkVty
