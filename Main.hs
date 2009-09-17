@@ -1,17 +1,21 @@
 module Main (main) where
 
+import System.Exit
+import System.IO
 import System.Console.GetOpt
-import Data.Maybe (fromMaybe)
-import IO
-import System
+import System.Environment
 
 import Hed
 
+version :: String
 version = "0.01"
 
 data Options = Options { optFile :: Maybe String} deriving (Show)
+
+startOptions :: Options
 startOptions = Options { optFile = Nothing }
 
+options :: [OptDescr (Options -> IO Options)]
 options =
     [ Option ['i'] ["input"]
         (ReqArg
@@ -35,9 +39,10 @@ options =
         "Show help"
     ]
 
+main :: IO ()
 main = do
     args <- getArgs
-    let (actions, nonOptions, errors) = getOpt RequireOrder options args
+    let (actions, _, _) = getOpt RequireOrder options args
     opts <- foldl (>>=) (return startOptions) actions
     let Options { optFile = Nothing } = opts
 

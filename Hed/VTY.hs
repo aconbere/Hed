@@ -2,7 +2,6 @@ module Hed.VTY where
 
 import Graphics.Vty
 import System.IO
-import qualified Data.ByteString.Char8 as B
 import Data.Word
 
 import Hed.EditBuffer
@@ -35,7 +34,7 @@ play vt w h buf = do
         EvResize nx ny                -> play vt (toEnum nx) (toEnum ny) buf
         _                             -> play vt w h buf
 
-renderStatus buf@(EditBuffer _ (x,y) _) w h =
+renderStatus (EditBuffer _ (x,y) _) w h =
     string def_attr (take w (statusLine ++ repeat ' '))
     where statusLine = "Status -- Size: (" ++ show w ++ ", " ++ show h ++ ") " ++
                                  "Pos: (" ++ show x ++ ", " ++ show y ++ ")"
@@ -45,7 +44,7 @@ renderLine line width attr =
     iso_10464_string attr $ (take width (line ++ repeat ' '))
 
 renderBuffer :: EditBuffer -> Int -> Int -> Image
-renderBuffer buf@(EditBuffer topLine (x,y) contents) w h =
+renderBuffer (EditBuffer _ _ contents) w h =
     vert_cat (map (\l -> renderLine l w dumpA) $ take h (lines (contents ++ repeat '\n')))
 
 render :: EditBuffer -> Int -> Int -> Picture

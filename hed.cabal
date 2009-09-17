@@ -7,3 +7,28 @@ homepage: http://github.com/aconbere/hed
 synopsis: a SIMPLE text editor
 description:
     Hed is an extremely simple text editor, meant to be expiremented with, played with, and broken.
+
+build-type:         Simple
+
+library
+    exposed-modules:    Hed
+                        Hed.Main
+                        Hed.EditBuffer
+                        Hed.VTY
+    build-depends:
+        base,
+        vty >= 4.0.0.1
+
+    ghc-options: -Wall
+    ghc-prof-options:   -prof -auto-all
+
+executable hed
+    main-is:            Main.hs
+    other-modules:      Hed
+                        Hed.Main
+                        Hed.EditBuffer
+                        Hed.VTY
+
+    ghc-options:        -funbox-strict-fields -Wall
+    ghc-prof-options:   -prof -auto-all
+

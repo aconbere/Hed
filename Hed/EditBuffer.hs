@@ -42,7 +42,7 @@ module Hed.EditBuffer
      , getCursor
      ) where
 
-import Char
+import Data.Char
 
 type Location = (Int, Int)
 type TopLine = Int

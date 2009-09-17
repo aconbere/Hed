@@ -6,6 +6,5 @@ module Hed (
 
 import Hed.VTY
 import Hed.EditBuffer
-import Hed.Opts
 import Hed.Main
 
