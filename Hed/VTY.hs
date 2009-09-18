@@ -44,11 +44,11 @@ renderStatus (EditBuffer _ (x,y) _) w h =
 
 renderLine :: String -> Int -> Attr -> Image
 renderLine line width attr =
-    iso_10464_string attr $ (take width (line ++ repeat ' '))
+    iso_10464_string attr $ take width (line ++ repeat ' ')
 
 renderBuffer :: EditBuffer -> Int -> Int -> Image
 renderBuffer buffer w h =
-    vert_cat (map (\l -> renderLine l w dumpA) $ take h (lines ((contents buffer) ++ repeat '\n')))
+    vert_cat (map (\l -> renderLine l w dumpA) $ take h (lines (contents buffer ++ repeat '\n')))
 
 render :: EditBuffer -> Int -> Int -> Picture
 render buf@(EditBuffer _ (x,y) _) w h = (pic_for_image i) {pic_cursor = Cursor (toEnum x) (toEnum y)}

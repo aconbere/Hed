@@ -44,7 +44,7 @@ data EditBuffer = EditBuffer { topLine :: TopLine,
                                contents :: String } deriving (Eq,Show)
 
 initialBuffer :: String -> EditBuffer
-initialBuffer s = EditBuffer 0 (0,0) s
+initialBuffer = EditBuffer 0 (0,0)
 
 empty :: EditBuffer
 empty = initialBuffer ""
@@ -65,15 +65,15 @@ insertString str buffer =
 
 deleteCharForward :: EditBuffer -> EditBuffer
 deleteCharForward buffer
-    | (currentLineLength buffer == 0) = buffer
-    | otherwise                       = resetCursor (buffer {contents = newContents})
-  where newContents     = before ++ (tail after)
+    | currentLineLength buffer == 0 = buffer
+    | otherwise                      = resetCursor (buffer {contents = newContents})
+  where newContents     = before ++ tail after
         (before, after) = split buffer
 
 deleteCharBackward :: EditBuffer -> EditBuffer
 deleteCharBackward buffer
-    | (currentLineLength buffer == 0) = buffer
-    | otherwise                = 
+    | currentLineLength buffer == 0 = buffer
+    | otherwise                     = 
         case before of
             [] -> buffer
             _  -> moveLeft (buffer {contents = init before ++ after})
@@ -91,7 +91,7 @@ insertLineAfter buffer =
 
 deleteLine :: EditBuffer ->EditBuffer
 deleteLine buffer = resetCursor (buffer {contents = newContents})
-  where newContents = unlines [ line | (line, pos) <- numberedLines (contents buffer), pos /= (snd $ cursor buffer)] 
+  where newContents = unlines [ line | (line, pos) <- numberedLines (contents buffer), pos /= snd (cursor buffer)] 
 
 setCursorX :: Int -> EditBuffer -> EditBuffer
 setCursorX nx buffer =
@@ -143,7 +143,7 @@ moveToEnd = setCursor lastPos lastPos
   where lastPos = (maxBound :: Int) - 1
 
 moveToLine :: Int -> EditBuffer -> EditBuffer
-moveToLine lineNumber = setCursor 0 lineNumber
+moveToLine = setCursor 0
 
 moveToLineStart :: EditBuffer -> EditBuffer
 moveToLineStart buf@(EditBuffer _ (_,y) _) = setCursor 0 y buf
@@ -154,7 +154,7 @@ moveToLineEnd buf@(EditBuffer _ (_,y) _) =
 
 wordForward :: EditBuffer -> EditBuffer
 wordForward buffer =
-  case dropSpaces . dropWord . drop (absPosition buffer) . numberedElements $ (contents buffer) of
+  case dropSpaces . dropWord . drop (absPosition buffer) . numberedElements $ contents buffer of
     []            -> buffer
     ((_,pos) : _) -> buffer {cursor = (locationFromPosition pos (contents buffer))}
 
@@ -168,7 +168,7 @@ wordBackward buffer@(EditBuffer _ _ cont) =
 currentLine :: EditBuffer -> String
 currentLine (EditBuffer _ _ "") = ""
 currentLine buffer
-  | (y < 0) || (y >= (lineCount buffer))  = ""
+  | (y < 0) || (y >= lineCount buffer)  = ""
   | otherwise                             = lines (contents buffer) !! y
   where y = snd $ cursor buffer
 
@@ -186,7 +186,7 @@ absPosition (EditBuffer _ (x,y) cont) =
 locationFromPosition :: Int -> String -> Location
 locationFromPosition pos cont =
   let foreLines = init . lines . take (pos + 1) $ cont
-      x         = pos - (length $ unlines foreLines) 
+      x         = pos - length (unlines foreLines) 
       y         = length foreLines
   in (x, y)
 
@@ -209,7 +209,7 @@ dropInNumbered :: (Char -> Bool) -> [(Char,a)] -> [(Char,a)]
 dropInNumbered f = dropWhile (\(ch,_) -> f ch)
 
 numberedElements :: [a] -> [(a,Int)]
-numberedElements = (flip zip) [0..]
+numberedElements = flip zip [0..]
 
 numberedLines :: String -> [(String,Int)]
 numberedLines = numberedElements . lines

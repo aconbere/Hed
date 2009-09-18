@@ -17,14 +17,14 @@ startOptions = Options { optFile = Nothing }
 
 options :: [OptDescr (Options -> IO Options)]
 options =
-    [Option ['V'] ["version"]
+    [Option "V" ["version"]
         (NoArg
             (\_ -> do
                 hPutStrLn stderr (concat ["Version: ", version])
                 exitWith ExitSuccess))
         "Print version"
  
-    , Option ['h'] ["help"]
+    , Option "h" ["help"]
         (NoArg
             (\_ -> do
     	        prg <- getProgName
@@ -40,6 +40,4 @@ main = do
     foldl (>>=) (return startOptions) actions
     case nonoptions of
         [] -> hed ""
-        (f:_) -> do
-            f_contents <- readFile f
-            hed f_contents
+        (f:_) -> readFile f >>= hed
