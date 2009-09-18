@@ -4,13 +4,15 @@ import Graphics.Vty
 import System.IO
 import Data.Word
 
-import Hed.EditBuffer
+import Hed.Buffer
 
+window :: String -> IO ()
 window s = do
     vt <- mkVty
     DisplayRegion w h <- display_bounds $ terminal vt
     play vt w h (initialBuffer s)
 
+pieceA, dumpA, statusA :: Attr
 pieceA = def_attr `with_fore_color` red
 dumpA = def_attr `with_fore_color` white
 statusA = def_attr `with_back_color` green

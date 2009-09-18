@@ -13,7 +13,7 @@ build-type:         Simple
 library
     exposed-modules:    Hed
                         Hed.Main
-                        Hed.EditBuffer
+                        Hed.Buffer
                         Hed.VTY
     build-depends:
         base,
@@ -26,7 +26,7 @@ executable hed
     main-is:            Main.hs
     other-modules:      Hed
                         Hed.Main
-                        Hed.EditBuffer
+                        Hed.Buffer
                         Hed.VTY
 
     ghc-options:        -funbox-strict-fields -Wall

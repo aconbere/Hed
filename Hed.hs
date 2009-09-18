@@ -1,10 +1,10 @@
 module Hed (
     module Hed.VTY,
-    module Hed.EditBuffer,
+    module Hed.Buffer,
     module Hed.Main
     ) where
 
 import Hed.VTY
-import Hed.EditBuffer
+import Hed.Buffer
 import Hed.Main
 
