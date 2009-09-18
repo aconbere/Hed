@@ -17,13 +17,7 @@ startOptions = Options { optFile = Nothing }
 
 options :: [OptDescr (Options -> IO Options)]
 options =
-    [ Option ['i'] ["input"]
-        (ReqArg
-            (\arg opt -> return opt { optFile = Just arg })
-            "FILE")
-        "Input file"
- 
-    , Option ['V'] ["version"]
+    [Option ['V'] ["version"]
         (NoArg
             (\_ -> do
                 hPutStrLn stderr (concat ["Version: ", version])
@@ -42,12 +36,10 @@ options =
 main :: IO ()
 main = do
     args <- getArgs
-    let (actions, _, _) = getOpt RequireOrder options args
-    opts <- foldl (>>=) (return startOptions) actions
-    let Options { optFile = Nothing } = opts
-
-    case optFile opts of
-        Nothing -> hed "This helps me know how things are initialized \n\n help"
-        Just f -> do
+    let (actions, nonoptions, _) = getOpt RequireOrder options args
+    foldl (>>=) (return startOptions) actions
+    case nonoptions of
+        [] -> hed ""
+        (f:_) -> do
             f_contents <- readFile f
             hed f_contents

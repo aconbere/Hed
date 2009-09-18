@@ -85,8 +85,8 @@ replaceChar ch' buffer =
     where (before, after) = splitAt (absPosition buffer) (contents buffer)
  
 insertLineAfter :: EditBuffer -> EditBuffer
-insertLineAfter buffer = moveDown (buffer {contents = newContents})
-    buffer {contents = unlines (b ++ [""] ++ a)}
+insertLineAfter buffer =
+    moveDown $ buffer {contents = unlines (b ++ [""] ++ a)}
     where (b,a) = splitAt ((snd.cursor) buffer) ((lines.contents) buffer)
 
 deleteLine :: EditBuffer ->EditBuffer

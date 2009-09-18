@@ -36,6 +36,7 @@ play vt w h buf = do
         EvResize nx ny                -> play vt (toEnum nx) (toEnum ny) buf
         _                             -> play vt w h buf
 
+renderStatus :: EditBuffer -> Int -> Int -> Image
 renderStatus (EditBuffer _ (x,y) _) w h =
     string def_attr (take w (statusLine ++ repeat ' '))
     where statusLine = "Status -- Size: (" ++ show w ++ ", " ++ show h ++ ") " ++
@@ -46,9 +47,9 @@ renderLine line width attr =
     iso_10464_string attr $ (take width (line ++ repeat ' '))
 
 renderBuffer :: EditBuffer -> Int -> Int -> Image
-renderBuffer (EditBuffer _ _ contents) w h =
-    vert_cat (map (\l -> renderLine l w dumpA) $ take h (lines (contents ++ repeat '\n')))
+renderBuffer buffer w h =
+    vert_cat (map (\l -> renderLine l w dumpA) $ take h (lines ((contents buffer) ++ repeat '\n')))
 
 render :: EditBuffer -> Int -> Int -> Picture
-render buf@(EditBuffer _ (x,y) contents) w h = (pic_for_image i) {pic_cursor = Cursor (toEnum x) (toEnum y)}
+render buf@(EditBuffer _ (x,y) _) w h = (pic_for_image i) {pic_cursor = Cursor (toEnum x) (toEnum y)}
     where i =  renderBuffer buf w (h - 1) <-> renderStatus buf w h 
