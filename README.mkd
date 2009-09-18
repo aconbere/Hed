@@ -10,7 +10,7 @@ Hed is really a toy to let me play with how one might go about writing a text ed
 
 ## Running Hed ##
 
-    $> hed -i /path/to/file
+    $> hed /path/to/file
 
 Hit Esc to exit
 
