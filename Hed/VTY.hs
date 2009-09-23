@@ -41,6 +41,12 @@ play vt w h win@(Window file' buf) = do
 
         EvKey (KASCII 'r') [MCtrl]    -> refresh vt >> play vt w h win
         EvKey (KASCII 'h') [MCtrl]    -> play vt w h win{buffer = (deleteCharBackward buf)}
+        EvKey (KASCII 'a') [MCtrl]    -> play vt w h win{buffer = (moveToLineStart buf)}
+        EvKey (KASCII 'e') [MCtrl]    -> play vt w h win{buffer = (moveToLineEnd buf)}
+        EvKey (KASCII 'w') [MCtrl]    -> play vt w h win{buffer = (wordForward buf)}
+        EvKey (KASCII 'b') [MCtrl]    -> play vt w h win{buffer = (wordBackward buf)}
+        EvKey (KASCII 'o') [MCtrl]    -> play vt w h win{buffer = (insertLineAfter buf)}
+        EvKey (KASCII 'k') [MCtrl]    -> play vt w h win{buffer = (deleteLine buf)}
         EvKey (KASCII '\t') []        -> play vt w h win{buffer = (insertString buf "    ")}
         EvKey (KASCII ch) []          -> play vt w h win{buffer = (insertChar buf ch)}
         EvKey KEnter []               -> play vt w h win{buffer = (insertChar buf '\n')}

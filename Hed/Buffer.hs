@@ -29,12 +29,12 @@ module Hed.Buffer
      , split
      , lineCount
      , insertChar
+     , insertString
      , deleteCharForward
      , deleteCharBackward
-     , replaceChar
-     , insertString
      , insertLineAfter
      , deleteLine
+     , replaceChar
      , moveLeft, moveRight, moveUp, moveDown
      , moveToHome, moveToEnd, moveToLine
      , moveToLineStart, moveToLineEnd
