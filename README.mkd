@@ -14,3 +14,9 @@ Hed is really a toy to let me play with how one might go about writing a text ed
 
 Hit Esc to exit
 
+## Bugs ##
+
+1) In some files the currentLineLength reported is incorrect for some lines
+   It appears that the line length is coming from the line above the current line
+
+2) bringing the Cursor below the status Line can cause Hed to crash

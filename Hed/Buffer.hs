@@ -22,61 +22,70 @@
    OTHER DEALINGS IN THE SOFTWARE. -}
 
 module Hed.Buffer
-     ( empty
+     ( EditBuffer (..)
+     , boundedValue
+     , mkBuffer
+     , empty
+     , split
      , lineCount
-     , insertChar, deleteCharForward, deleteCharBackward, replaceChar, insertString
+     , insertChar
+     , deleteCharForward
+     , deleteCharBackward
+     , replaceChar
+     , insertString
      , insertLineAfter
      , deleteLine
      , moveLeft, moveRight, moveUp, moveDown
      , moveToHome, moveToEnd, moveToLine
      , moveToLineStart, moveToLineEnd
      , wordForward, wordBackward
-     , initialBuffer
-     , EditBuffer (..)
+     , currentLineLength
+     , absPosition
      ) where
 
 import Data.Char
 
-type Location = (Int, Int)
-type TopLine = Int
-data EditBuffer = EditBuffer { topLine :: TopLine,
-                               cursor :: Location,
-                               contents :: String } deriving (Eq,Show)
+data EditBuffer = EditBuffer { cursor :: (Int, Int)
+                             , contents :: String
+                             } deriving (Eq,Show)
 
-initialBuffer :: String -> EditBuffer
-initialBuffer = EditBuffer 0 (0,0)
+mkBuffer :: Int -> Int -> String -> EditBuffer
+mkBuffer _ _ "" = EditBuffer (0,0) ""
+mkBuffer x y cont = EditBuffer (x',y') cont
+    where y' = boundedValue (length (lines cont) - 1) y
+          x' = boundedValue (length (lines cont !! y') - 1) x
 
 empty :: EditBuffer
-empty = initialBuffer ""
+empty = mkBuffer 0 0 ""
 
 lineCount :: EditBuffer -> Int
 lineCount = (length . lines) . contents
 
-insertChar :: Char -> EditBuffer -> EditBuffer
-insertChar ch buffer
+insertChar :: EditBuffer -> Char -> EditBuffer
+insertChar buffer ch
     | ch == '\n' = moveDown (buffer {contents = newContents})
     | otherwise  = moveRight (buffer {contents = newContents})
-  where newContents      = before ++ [ch] ++ after
-        (before, after)  = split buffer
+  where newContents = before ++ [ch] ++ after
+        (before, after) = split buffer
 
-insertString :: String -> EditBuffer -> EditBuffer
-insertString str buffer =
-    foldl (\b ch -> insertChar ch b) buffer str
+insertString :: EditBuffer -> String -> EditBuffer
+insertString =
+    foldl insertChar
+
+init' :: [a] -> [a]
+init' [] = []
+init' ls = init ls
 
 deleteCharForward :: EditBuffer -> EditBuffer
 deleteCharForward buffer
     | currentLineLength buffer == 0 = buffer
-    | otherwise                      = resetCursor (buffer {contents = newContents})
-  where newContents     = before ++ tail after
-        (before, after) = split buffer
+    | otherwise                     = buffer {contents = before ++ tail after}
+  where (before, after) = split buffer
 
 deleteCharBackward :: EditBuffer -> EditBuffer
 deleteCharBackward buffer
     | currentLineLength buffer == 0 = buffer
-    | otherwise                     = 
-        case before of
-            [] -> buffer
-            _  -> moveLeft (buffer {contents = init before ++ after})
+    | otherwise                     = moveLeft (buffer {contents = (init' before) ++ after})
     where (before, after) = split buffer
 
 replaceChar :: Char -> EditBuffer -> EditBuffer
@@ -89,7 +98,7 @@ insertLineAfter buffer =
     moveDown $ buffer {contents = unlines (b ++ [""] ++ a)}
     where (b,a) = splitAt ((snd.cursor) buffer) ((lines.contents) buffer)
 
-deleteLine :: EditBuffer ->EditBuffer
+deleteLine :: EditBuffer -> EditBuffer
 deleteLine buffer = resetCursor (buffer {contents = newContents})
   where newContents = unlines [ line | (line, pos) <- numberedLines (contents buffer), pos /= snd (cursor buffer)] 
 
@@ -110,7 +119,7 @@ setCursor nx ny = setCursorX nx . setCursorY ny
 -- if the bounds have changed (say a line or char was deleted) then
 -- one should reset the cursor to adjust for edge conditions
 resetCursor :: EditBuffer -> EditBuffer
-resetCursor buf@(EditBuffer _ (x,y) _) =
+resetCursor buf@(EditBuffer (x,y) _) =
     setCursor x y buf
 
 -- updates the cursor by a particular offset given by (ax, ay)
@@ -118,15 +127,14 @@ resetCursor buf@(EditBuffer _ (x,y) _) =
 -- moveCursor 1 2 buf
 -- would return a cursor at (1,2)
 moveCursor :: Int -> Int -> EditBuffer -> EditBuffer
-moveCursor ax ay buf@(EditBuffer _ (x,y) _) =
+moveCursor ax ay buf@(EditBuffer (x,y) _) =
     setCursor (x + ax) (y + ay) buf
 
--- bounds a value between 0 and (bound - 1)
 boundedValue :: Int -> Int -> Int
 boundedValue bound value
-  | bound <= 1      = 0
-  | value <= 0      = 0
-  | value >= bound  = bound - 1 
+  | bound < 0       = 0
+  | value < 0       = 0
+  | value >= bound  = bound
   | otherwise       = value
 
 moveLeft, moveRight, moveUp, moveDown :: EditBuffer -> EditBuffer
@@ -146,10 +154,10 @@ moveToLine :: Int -> EditBuffer -> EditBuffer
 moveToLine = setCursor 0
 
 moveToLineStart :: EditBuffer -> EditBuffer
-moveToLineStart buf@(EditBuffer _ (_,y) _) = setCursor 0 y buf
+moveToLineStart buf@(EditBuffer (_,y) _) = setCursor 0 y buf
 
 moveToLineEnd :: EditBuffer -> EditBuffer
-moveToLineEnd buf@(EditBuffer _ (_,y) _) = 
+moveToLineEnd buf@(EditBuffer (_,y) _) = 
     setCursor (currentLineLength buf) y buf
 
 wordForward :: EditBuffer -> EditBuffer
@@ -159,17 +167,17 @@ wordForward buffer =
     ((_,pos) : _) -> buffer {cursor = (locationFromPosition pos (contents buffer))}
 
 wordBackward :: EditBuffer -> EditBuffer
-wordBackward buffer@(EditBuffer _ _ cont) = 
+wordBackward buffer@(EditBuffer _ cont) = 
   case dropWord . dropSpaces . reverse . take (absPosition buffer) . numberedElements $ cont of
     []            -> buffer {cursor = locationFromPosition 0 cont}
     ((_,pos) : _) -> buffer {cursor = (locationFromPosition (pos+1) cont)}
 
 -- returns the line at the cursor
 currentLine :: EditBuffer -> String
-currentLine (EditBuffer _ _ "") = ""
+currentLine (EditBuffer _ "") = ""
 currentLine buffer
   | (y < 0) || (y >= lineCount buffer)  = ""
-  | otherwise                             = lines (contents buffer) !! y
+  | otherwise                           = lines (contents buffer) !! y
   where y = snd $ cursor buffer
 
 -- returns the horizontal line length at the cursor
@@ -180,10 +188,10 @@ split :: EditBuffer -> (String,String)
 split buffer = splitAt (absPosition buffer) (contents buffer)
 
 absPosition :: EditBuffer -> Int
-absPosition (EditBuffer _ (x,y) cont) =
+absPosition (EditBuffer (x,y) cont) =
   (x+) . length . unlines . take y . lines $ cont
 
-locationFromPosition :: Int -> String -> Location
+locationFromPosition :: Int -> String -> (Int, Int)
 locationFromPosition pos cont =
   let foreLines = init . lines . take (pos + 1) $ cont
       x         = pos - length (unlines foreLines) 

@@ -39,5 +39,5 @@ main = do
     let (actions, nonoptions, _) = getOpt RequireOrder options args
     foldl (>>=) (return startOptions) actions
     case nonoptions of
-        [] -> hed ""
-        (f:_) -> readFile f >>= hed
+        [] -> hed Nothing ""
+        (f:_) -> readFile f >>= hed (Just f)
