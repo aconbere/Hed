@@ -1,3 +1,3 @@
-ghc --make Hed.Test -main-is Hed.Test -o hed-test
-./hed-test
-rm ./hed-test
+cabal configure
+cabal build
+./dist/build/hed-test/hed-test

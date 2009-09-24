@@ -16,7 +16,10 @@ library
                         Hed.VTY
     build-depends:
         base,
-        vty >= 4.0.0.1
+        vty >= 4.0.0.1,
+        QuickCheck >= 2.0.0.0,
+        test-framework >= 0.2.4,
+        test-framework-quickcheck2 >= 0.2.4 
 
     ghc-options: -Wall
     ghc-prof-options:   -prof -auto-all
@@ -30,4 +33,8 @@ executable hed
 
     ghc-options:        -funbox-strict-fields -Wall
     ghc-prof-options:   -prof -auto-all
+
+executable hed-test
+    main-is: Hed/Test.hs
+    ghc-options: -main-is Hed.Test
 
