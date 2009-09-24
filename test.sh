@@ -1,2 +1,3 @@
-ghc --make Test -main-is Hed.Test -o hed-test
+ghc --make Hed.Test -main-is Hed.Test -o hed-test
 ./hed-test
+rm ./hed-test

@@ -1,4 +1,4 @@
-module Test.Buffer where
+module Hed.Test.Buffer where
 
 import Hed.Buffer
 import Test.QuickCheck
