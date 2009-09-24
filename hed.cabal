@@ -5,10 +5,9 @@ license-file: LICENSE
 version: 0.1
 homepage: http://github.com/aconbere/hed
 synopsis: a SIMPLE text editor
-description:
-    Hed is an extremely simple text editor, meant to be expiremented with, played with, and broken.
-
-build-type:         Simple
+description: Hed is an extremely simple text editor, meant to be expiremented with, played with, and broken.
+build-type: Simple
+cabal-version: >= 1.2
 
 library
     exposed-modules:    Hed

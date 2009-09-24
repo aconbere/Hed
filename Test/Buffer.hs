@@ -1,4 +1,4 @@
-module Properties where
+module Test.Buffer where
 
 import Hed.Buffer
 import Test.QuickCheck
